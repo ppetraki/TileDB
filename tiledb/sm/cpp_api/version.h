@@ -34,6 +34,7 @@
 #define TILEDB_CPP_API_VERSION_H
 
 #include "tiledb.h"
+#include <sys/sysmacros.h>
 
 #include <iostream>
 
