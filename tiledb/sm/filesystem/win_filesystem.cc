@@ -125,13 +125,13 @@ Status touch(const std::string& filename) {
 std::string current_dir() {
   std::string dir;
   unsigned long length = GetCurrentDirectory(0, nullptr);
-  char* path = (char*)std::malloc(length * sizeof(char));
+  char* path = (char*)::operator new(length * sizeof(char), std::nothrow);
   if (path == nullptr || GetCurrentDirectory(length, path) == 0) {
     LOG_STATUS(
         Status::IOError(std::string("Failed to get current directory.")));
   }
   dir = path;
-  std::free(path);
+  ::operator delete(path);
   return dir;
 }
 

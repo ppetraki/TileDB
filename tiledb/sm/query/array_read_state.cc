@@ -89,24 +89,24 @@ ArrayReadState::ArrayReadState(Query* query)
   for (unsigned int i = 0; i < fragment_num_; ++i)
     fragment_read_states_[i] = fragments[i]->read_state();
 
-  tile_coords_aux_ = std::malloc(coords_size_);
+  tile_coords_aux_ = ::operator new(coords_size_, std::nothrow);
 }
 
 ArrayReadState::~ArrayReadState() {
   if (min_bounding_coords_end_ != nullptr)
-    std::free(min_bounding_coords_end_);
+    ::operator delete(min_bounding_coords_end_);
 
   if (subarray_tile_coords_ != nullptr)
-    std::free(subarray_tile_coords_);
+    ::operator delete(subarray_tile_coords_);
 
   if (subarray_tile_domain_ != nullptr)
-    std::free(subarray_tile_domain_);
+    ::operator delete(subarray_tile_domain_);
 
   auto fragment_bounding_coords_num =
       (unsigned int)fragment_bounding_coords_.size();
   for (unsigned int i = 0; i < fragment_bounding_coords_num; ++i)
     if (fragment_bounding_coords_[i] != nullptr)
-      std::free(fragment_bounding_coords_[i]);
+      ::operator delete(fragment_bounding_coords_[i]);
 
   uint64_t fragment_cell_pos_ranges_vec_size =
       fragment_cell_pos_ranges_vec_.size();
@@ -114,7 +114,7 @@ ArrayReadState::~ArrayReadState() {
     delete fragment_cell_pos_ranges_vec_[i];
 
   if (tile_coords_aux_ != nullptr)
-    std::free(tile_coords_aux_);
+    ::operator delete(tile_coords_aux_);
 }
 
 /* ****************************** */
@@ -226,13 +226,13 @@ Status ArrayReadState::compute_fragment_cell_pos_ranges(
     }
 
     // Clean up corresponding input cell range
-    std::free((*fragment_cell_ranges)[i].second);
+    ::operator delete((*fragment_cell_ranges)[i].second);
     (*fragment_cell_ranges)[i].second = nullptr;
   }
 
   // Clean up
   for (uint64_t i = 0; i < fragment_cell_ranges_num; ++i)
-    std::free((*fragment_cell_ranges)[i].second);
+    ::operator delete((*fragment_cell_ranges)[i].second);
   fragment_cell_ranges->clear();
   if (!st.ok())
     fragment_cell_pos_ranges->clear();
@@ -248,7 +248,7 @@ void ArrayReadState::compute_min_bounding_coords_end() {
 
   // Allocate memory
   if (min_bounding_coords_end_ == nullptr)
-    min_bounding_coords_end_ = std::malloc(coords_size_);
+    min_bounding_coords_end_ = ::operator new(coords_size_, std::nothrow);
   auto min_bounding_coords_end = static_cast<T*>(min_bounding_coords_end_);
 
   // Compute min bounding coords end
@@ -1121,7 +1121,7 @@ ArrayReadState::FragmentCellRanges ArrayReadState::empty_fragment_cell_ranges()
 
   // Contiguous cells, single cell range
   if (overlap == 1 || overlap == 3) {
-    void* cell_range = std::malloc(cell_range_size);
+    void* cell_range = ::operator new(cell_range_size, std::nothrow);
     auto cell_range_T = static_cast<T*>(cell_range);
     for (unsigned int i = 0; i < dim_num; ++i) {
       cell_range_T[i] = query_tile_overlap_subarray[2 * i];
@@ -1141,7 +1141,7 @@ ArrayReadState::FragmentCellRanges ArrayReadState::empty_fragment_cell_ranges()
     if (cell_order == Layout::ROW_MAJOR) {  // ROW
       while (coords[0] <= query_tile_overlap_subarray[1]) {
         // Make a cell range representing a slab
-        void* cell_range = std::malloc(cell_range_size);
+        void* cell_range = ::operator new(cell_range_size, std::nothrow);
         auto cell_range_T = static_cast<T*>(cell_range);
         for (unsigned int j = 0; j < dim_num - 1; ++j) {
           cell_range_T[j] = coords[j];
@@ -1167,7 +1167,7 @@ ArrayReadState::FragmentCellRanges ArrayReadState::empty_fragment_cell_ranges()
       while (coords[dim_num - 1] <=
              query_tile_overlap_subarray[2 * (dim_num - 1) + 1]) {
         // Make a cell range representing a slab
-        void* cell_range = std::malloc(cell_range_size);
+        void* cell_range = ::operator new(cell_range_size, std::nothrow);
         auto cell_range_T = static_cast<T*>(cell_range);
         for (int j = dim_num - 1; j > 0; --j) {
           cell_range_T[j] = coords[j];
@@ -1353,7 +1353,7 @@ void ArrayReadState::get_next_overlapping_tiles_sparse() {
     for (unsigned int i = 0; i < fragment_num_; ++i) {
       fragment_read_states_[i]->get_next_overlapping_tile_sparse<T>();
       if (!fragment_read_states_[i]->done()) {
-        fragment_bounding_coords_[i] = std::malloc(2 * coords_size_);
+        fragment_bounding_coords_[i] = ::operator new(2 * coords_size_, std::nothrow);
         assert(fragment_bounding_coords_[i] != NULL);
         fragment_read_states_[i]->get_bounding_coords(
             fragment_bounding_coords_[i]);
@@ -1379,7 +1379,7 @@ void ArrayReadState::get_next_overlapping_tiles_sparse() {
               fragment_bounding_coords_[i]);
         } else {
           if (fragment_bounding_coords_[i])
-            std::free(fragment_bounding_coords_[i]);
+            ::operator delete(fragment_bounding_coords_[i]);
           fragment_bounding_coords_[i] = nullptr;
         }
       }
@@ -1408,7 +1408,7 @@ void ArrayReadState::init_subarray_tile_coords() {
 
   // Allocate space for tile domain and subarray tile domain
   auto tile_domain = new T[2 * dim_num];
-  subarray_tile_domain_ = std::malloc(2 * dim_num * sizeof(T));
+  subarray_tile_domain_ = ::operator new(2 * dim_num * sizeof(T), std::nothrow);
   auto subarray_tile_domain = static_cast<T*>(subarray_tile_domain_);
 
   // Get subarray in tile domain
@@ -1421,11 +1421,11 @@ void ArrayReadState::init_subarray_tile_coords() {
 
   // Calculate subarray tile coordinates
   if (!overlap) {  // No overlap
-    std::free(subarray_tile_domain_);
+    ::operator delete(subarray_tile_domain_);
     subarray_tile_domain_ = nullptr;
     assert(subarray_tile_coords_ == NULL);
   } else {  // Overlap
-    subarray_tile_coords_ = std::malloc(coords_size_);
+    subarray_tile_coords_ = ::operator new(coords_size_, std::nothrow);
     auto subarray_tile_coords = static_cast<T*>(subarray_tile_coords_);
     for (unsigned int i = 0; i < dim_num; ++i)
       subarray_tile_coords[i] = subarray_tile_domain[2 * i];
@@ -1458,9 +1458,9 @@ void ArrayReadState::get_next_subarray_tile_coords() {
 
   // The coordinates fall outside the domain
   if (!inside_domain) {
-    std::free(subarray_tile_domain_);
+    ::operator delete(subarray_tile_domain_);
     subarray_tile_domain_ = nullptr;
-    std::free(subarray_tile_coords_);
+    ::operator delete(subarray_tile_coords_);
     subarray_tile_coords_ = nullptr;
   }
 }
@@ -2042,7 +2042,7 @@ Status ArrayReadState::sort_fragment_cell_ranges(
           popped->trim(top, trimmed_top, tile_domain);
 
           // Discard top
-          std::free(top->cell_range_);
+          ::operator delete(top->cell_range_);
           delete top;
           pq.pop();
 
@@ -2077,7 +2077,7 @@ Status ArrayReadState::sort_fragment_cell_ranges(
           }
 
           // Discard top
-          std::free(top->cell_range_);
+          ::operator delete(top->cell_range_);
           delete top;
           pq.pop();
 

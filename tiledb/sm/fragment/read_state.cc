@@ -68,10 +68,10 @@ ReadState::ReadState() {
 
 ReadState::~ReadState() {
   if (last_tile_coords_ != nullptr)
-    std::free(last_tile_coords_);
+    ::operator delete(last_tile_coords_);
 
   if (tile_coords_aux_ != nullptr)
-    std::free(tile_coords_aux_);
+    ::operator delete(tile_coords_aux_);
 
   for (auto& tile : tiles_)
     delete tile;
@@ -86,7 +86,7 @@ ReadState::~ReadState() {
     delete tile_io_var;
 
   if (search_tile_overlap_subarray_ != nullptr)
-    std::free(search_tile_overlap_subarray_);
+    ::operator delete(search_tile_overlap_subarray_);
 }
 
 /* ****************************** */
@@ -105,8 +105,8 @@ Status ReadState::init(
   last_tile_coords_ = nullptr;
   search_tile_pos_ = INVALID_UINT64;
 
-  search_tile_overlap_subarray_ = std::malloc(2 * coords_size_);
-  tile_coords_aux_ = std::malloc(coords_size_);
+  search_tile_overlap_subarray_ = ::operator new(2 * coords_size_, std::nothrow);
+  tile_coords_aux_ = ::operator new(coords_size_, std::nothrow);
   if (search_tile_overlap_subarray_ == nullptr || tile_coords_aux_ == nullptr)
     return LOG_STATUS(Status::ReadStateError(
         "Cannot initialize read state; Member memory allocation failed"));
@@ -430,7 +430,7 @@ Status ReadState::get_fragment_cell_ranges_dense(
 
   // Contiguous cells, single cell range
   if (search_tile_overlap_ == 1 || search_tile_overlap_ == 3) {
-    void* cell_range = std::malloc(cell_range_size);
+    void* cell_range = ::operator new(cell_range_size, std::nothrow);
     auto cell_range_T = static_cast<T*>(cell_range);
     for (unsigned int i = 0; i < dim_num; ++i) {
       cell_range_T[i] = search_tile_overlap_subarray[2 * i];
@@ -449,7 +449,7 @@ Status ReadState::get_fragment_cell_ranges_dense(
     if (cell_order == Layout::ROW_MAJOR) {  // ROW
       while (coords[0] <= search_tile_overlap_subarray[1]) {
         // Make a cell range representing a slab
-        void* cell_range = std::malloc(cell_range_size);
+        void* cell_range = ::operator new(cell_range_size, std::nothrow);
         auto cell_range_T = static_cast<T*>(cell_range);
         for (unsigned int j = 0; j < dim_num - 1; ++j) {
           cell_range_T[j] = coords[j];
@@ -479,7 +479,7 @@ Status ReadState::get_fragment_cell_ranges_dense(
       while (coords[dim_num - 1] <=
              search_tile_overlap_subarray[2 * (dim_num - 1) + 1]) {
         // Make a cell range representing a slab
-        void* cell_range = std::malloc(cell_range_size);
+        void* cell_range = ::operator new(cell_range_size, std::nothrow);
         auto cell_range_T = static_cast<T*>(cell_range);
         for (unsigned int j = dim_num - 1; j > 0; --j) {
           cell_range_T[j] = coords[j];
@@ -566,7 +566,7 @@ Status ReadState::get_fragment_cell_ranges_sparse(
   if (search_tile_overlap_ == 1) {
     FragmentCellRange fragment_cell_range;
     fragment_cell_range.first = FragmentInfo(fragment_i, search_tile_pos_);
-    fragment_cell_range.second = std::malloc(2 * coords_size_);
+    fragment_cell_range.second = ::operator new(2 * coords_size_, std::nothrow);
     auto cell_range = static_cast<T*>(fragment_cell_range.second);
     std::memcpy(cell_range, start_coords, coords_size_);
     std::memcpy(&cell_range[dim_num], end_coords, coords_size_);
@@ -605,7 +605,7 @@ Status ReadState::get_fragment_cell_ranges_sparse(
           FragmentCellRange fragment_cell_range;
           fragment_cell_range.first =
               FragmentInfo(fragment_i, search_tile_pos_);
-          fragment_cell_range.second = std::malloc(2 * coords_size_);
+          fragment_cell_range.second = ::operator new(2 * coords_size_, std::nothrow);
           auto cell_range = static_cast<T*>(fragment_cell_range.second);
 
           RETURN_NOT_OK(read_from_tile(
@@ -631,7 +631,7 @@ Status ReadState::get_fragment_cell_ranges_sparse(
   if (current_end_pos != INVALID_UINT64) {
     FragmentCellRange fragment_cell_range;
     fragment_cell_range.first = FragmentInfo(fragment_i, search_tile_pos_);
-    fragment_cell_range.second = std::malloc(2 * coords_size_);
+    fragment_cell_range.second = ::operator new(2 * coords_size_, std::nothrow);
     auto cell_range = static_cast<T*>(fragment_cell_range.second);
 
     RETURN_NOT_OK(read_from_tile(
@@ -793,7 +793,7 @@ void ReadState::get_next_overlapping_tile_sparse(const T* tile_coords) {
 
   // Check against last coordinates
   if (last_tile_coords_ == nullptr) {
-    last_tile_coords_ = std::malloc(coords_size_);
+    last_tile_coords_ = ::operator new(coords_size_, std::nothrow);
     std::memcpy(last_tile_coords_, tile_coords, coords_size_);
   } else {
     if (!std::memcmp(last_tile_coords_, tile_coords, coords_size_)) {

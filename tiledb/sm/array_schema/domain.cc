@@ -91,21 +91,21 @@ Domain::Domain(const Domain* domain) {
   if (domain->domain_ == nullptr) {
     domain_ = nullptr;
   } else {
-    domain_ = std::malloc(2 * coords_size);
+    domain_ = ::operator new(2 * coords_size, std::nothrow);
     std::memcpy(domain_, domain->domain_, 2 * coords_size);
   }
 
   if (domain->tile_domain_ == nullptr) {
     tile_domain_ = nullptr;
   } else {
-    tile_domain_ = std::malloc(2 * coords_size);
+    tile_domain_ = ::operator new(2 * coords_size, std::nothrow);
     std::memcpy(tile_domain_, domain->tile_domain_, 2 * coords_size);
   }
 
   if (domain->tile_extents_ == nullptr) {
     tile_extents_ = nullptr;
   } else {
-    tile_extents_ = std::malloc(coords_size);
+    tile_extents_ = ::operator new(coords_size, std::nothrow);
     std::memcpy(tile_extents_, domain->tile_extents_, coords_size);
   }
 }
@@ -115,15 +115,15 @@ Domain::~Domain() {
     delete dim;
 
   if (tile_extents_ != nullptr) {
-    std::free(tile_extents_);
+    ::operator delete(tile_extents_);
     tile_extents_ = nullptr;
   }
   if (domain_ != nullptr) {
-    std::free(domain_);
+    ::operator delete(domain_);
     domain_ = nullptr;
   }
   if (tile_domain_ != nullptr) {
-    std::free(tile_domain_);
+    ::operator delete(tile_domain_);
     tile_domain_ = nullptr;
   }
 }
@@ -219,13 +219,13 @@ Status Domain::split_subarray_global(
         subarray, cell_order_, subarray_1, subarray_2);
 
   // Split by tile
-  *subarray_1 = std::malloc(2 * dim_num_ * sizeof(T));
+  *subarray_1 = ::operator new(2 * dim_num_ * sizeof(T), std::nothrow);
   if (*subarray_1 == nullptr)
     return LOG_STATUS(
         Status::DomainError("Cannot split subarray; Memory allocation failed"));
-  *subarray_2 = std::malloc(2 * dim_num_ * sizeof(T));
+  *subarray_2 = ::operator new(2 * dim_num_ * sizeof(T), std::nothrow);
   if (*subarray_2 == nullptr) {
-    std::free(subarray_1);
+    ::operator delete(subarray_1);
     *subarray_1 = nullptr;
     return LOG_STATUS(
         Status::DomainError("Cannot split subarray; Memory allocation failed"));
@@ -303,13 +303,13 @@ Status Domain::split_subarray_cell(
   }
 
   // Split
-  *subarray_1 = std::malloc(2 * dim_num_ * sizeof(T));
+  *subarray_1 = ::operator new(2 * dim_num_ * sizeof(T), std::nothrow);
   if (*subarray_1 == nullptr)
     return LOG_STATUS(
         Status::DomainError("Cannot split subarray; Memory allocation failed"));
-  *subarray_2 = std::malloc(2 * dim_num_ * sizeof(T));
+  *subarray_2 = ::operator new(2 * dim_num_ * sizeof(T), std::nothrow);
   if (*subarray_2 == nullptr) {
-    std::free(subarray_1);
+    ::operator delete(subarray_1);
     return LOG_STATUS(
         Status::DomainError("Cannot split subarray; Memory allocation failed"));
   }
@@ -681,8 +681,8 @@ Status Domain::init(Layout cell_order, Layout tile_order) {
   uint64_t coord_size = datatype_size(type_);
   uint64_t coords_size = dim_num_ * coord_size;
   if (domain_ != nullptr)
-    std::free(domain_);
-  domain_ = std::malloc(dim_num_ * 2 * coord_size);
+    ::operator delete(domain_);
+  domain_ = ::operator new(dim_num_ * 2 * coord_size, std::nothrow);
   auto domain = (char*)domain_;
   for (unsigned int i = 0; i < dim_num_; ++i) {
     std::memcpy(domain + i * 2 * coord_size, this->domain(i), 2 * coord_size);
@@ -690,11 +690,11 @@ Status Domain::init(Layout cell_order, Layout tile_order) {
 
   // Set tile extents
   if (tile_extents_ != nullptr)
-    std::free(tile_extents_);
+    ::operator delete(tile_extents_);
   if (null_tile_extents()) {
     tile_extents_ = nullptr;
   } else {
-    tile_extents_ = std::malloc(coords_size);
+    tile_extents_ = ::operator new(coords_size, std::nothrow);
     auto tile_extents = (char*)tile_extents_;
     for (unsigned int i = 0; i < dim_num_; ++i) {
       std::memcpy(tile_extents + i * coord_size, tile_extent(i), coord_size);
@@ -1276,7 +1276,7 @@ void Domain::compute_tile_domain() {
 
   // Allocate space for the tile domain
   assert(tile_domain_ == NULL);
-  tile_domain_ = std::malloc(2 * dim_num_ * sizeof(T));
+  tile_domain_ = ::operator new(2 * dim_num_ * sizeof(T), std::nothrow);
 
   // For easy reference
   auto tile_domain = static_cast<T*>(tile_domain_);

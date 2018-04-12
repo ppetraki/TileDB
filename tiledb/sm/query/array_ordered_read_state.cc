@@ -85,8 +85,8 @@ ArrayOrderedReadState::ArrayOrderedReadState(Query* query)
     buffer_sizes_tmp_[i] = nullptr;
     buffer_sizes_tmp_bak_[i] = nullptr;
     buffers_[i] = nullptr;
-    tile_slab_[i] = std::malloc(2 * coords_size_);
-    tile_slab_norm_[i] = std::malloc(2 * coords_size_);
+    tile_slab_[i] = ::operator new(2 * coords_size_, std::nothrow);
+    tile_slab_norm_[i] = ::operator new(2 * coords_size_, std::nothrow);
     tile_slab_init_[i] = false;
     async_wait_[i] = true;
   }
@@ -101,7 +101,7 @@ ArrayOrderedReadState::ArrayOrderedReadState(Query* query)
       attribute_sizes_.push_back(array_schema->cell_size(attribute_ids_[i]));
   }
 
-  subarray_ = std::malloc(2 * coords_size_);
+  subarray_ = ::operator new(2 * coords_size_, std::nothrow);
   std::memcpy(subarray_, query_->subarray(), 2 * coords_size_);
 
   // Calculate number of buffers
@@ -119,11 +119,11 @@ ArrayOrderedReadState::ArrayOrderedReadState(Query* query)
 ArrayOrderedReadState::~ArrayOrderedReadState() {
   // Clean up
   if (subarray_ != nullptr)
-    std::free(subarray_);
+    ::operator delete(subarray_);
   if (tile_coords_ != nullptr)
-    std::free(tile_coords_);
+    ::operator delete(tile_coords_);
   if (tile_domain_ != nullptr)
-    std::free(tile_domain_);
+    ::operator delete(tile_domain_);
 
   delete[] overflow_;
   delete[] overflow_still_;
@@ -141,12 +141,12 @@ ArrayOrderedReadState::~ArrayOrderedReadState() {
       delete[] buffer_sizes_tmp_bak_[i];
     if (buffers_[i] != nullptr) {
       for (unsigned int b = 0; b < buffer_num_; ++b)
-        std::free(buffers_[i][b]);
+        ::operator delete(buffers_[i][b]);
       free(buffers_[i]);
     }
 
-    std::free(tile_slab_[i]);
-    std::free(tile_slab_norm_[i]);
+    ::operator delete(tile_slab_[i]);
+    ::operator delete(tile_slab_norm_[i]);
   }
 
   // Free tile slab info and state, and copy state
@@ -954,8 +954,8 @@ void ArrayOrderedReadState::calculate_cell_slab_info_row_col(
 template <class T>
 void ArrayOrderedReadState::calculate_tile_domain(unsigned int id) {
   // Initializations
-  tile_coords_ = std::malloc(coords_size_);
-  tile_domain_ = std::malloc(2 * coords_size_);
+  tile_coords_ = ::operator new(coords_size_, std::nothrow);
+  tile_domain_ = ::operator new(2 * coords_size_, std::nothrow);
 
   // For easy reference
   auto tile_slab = (const T*)tile_slab_norm_[id];
@@ -1400,13 +1400,13 @@ void ArrayOrderedReadState::copy_tile_slab_sparse_var(
 
 Status ArrayOrderedReadState::create_buffers() {
   for (unsigned int j = 0; j < 2; ++j) {
-    buffers_[j] = (void**)std::malloc(buffer_num_ * sizeof(void*));
+    buffers_[j] = (void**)::operator new(buffer_num_ * sizeof(void*), std::nothrow);
     if (buffers_[j] == nullptr) {
       return LOG_STATUS(Status::ASRSError("Cannot create local buffers"));
     }
 
     for (unsigned int b = 0; b < buffer_num_; ++b) {
-      buffers_[j][b] = std::malloc(buffer_sizes_[j][b]);
+      buffers_[j][b] = ::operator new(buffer_sizes_[j][b], std::nothrow);
       if (buffers_[j][b] == nullptr) {
         return LOG_STATUS(Status::ASRSError("Cannot allocate local buffer"));
       }
@@ -1447,7 +1447,7 @@ void ArrayOrderedReadState::free_tile_slab_info() {
 
     if (info.range_overlap_ != nullptr) {
       for (uint64_t tile = 0; tile < tile_num; ++tile)
-        std::free(info.range_overlap_[tile]);
+        ::operator delete(info.range_overlap_[tile]);
       delete[] info.range_overlap_;
     }
 
@@ -1468,7 +1468,7 @@ void ArrayOrderedReadState::free_tile_slab_state() {
   // Clean up
   if (tile_slab_state_.current_coords_ != nullptr) {
     for (unsigned int i = 0; i < anum; ++i)
-      std::free(tile_slab_state_.current_coords_[i]);
+      ::operator delete(tile_slab_state_.current_coords_[i]);
     delete[] tile_slab_state_.current_coords_;
   }
 
@@ -1565,7 +1565,7 @@ void ArrayOrderedReadState::init_tile_slab_info(unsigned int id) {
   tile_slab_info_[id].cell_slab_num_ = new uint64_t[tile_num];
   tile_slab_info_[id].range_overlap_ = new void*[tile_num];
   for (uint64_t i = 0; i < tile_num; ++i) {
-    tile_slab_info_[id].range_overlap_[i] = std::malloc(2 * coords_size_);
+    tile_slab_info_[id].range_overlap_[i] = ::operator new(2 * coords_size_, std::nothrow);
     tile_slab_info_[id].cell_offset_per_dim_[i] = new uint64_t[dim_num_];
   }
 
@@ -1595,7 +1595,7 @@ void ArrayOrderedReadState::init_tile_slab_state() {
     tile_slab_state_.current_cell_pos_ = nullptr;
 
     for (unsigned int i = 0; i < anum; ++i) {
-      tile_slab_state_.current_coords_[i] = std::malloc(coords_size_);
+      tile_slab_state_.current_coords_[i] = ::operator new(coords_size_, std::nothrow);
       tile_slab_state_.current_offsets_[i] = 0;
       tile_slab_state_.current_tile_[i] = 0;
     }

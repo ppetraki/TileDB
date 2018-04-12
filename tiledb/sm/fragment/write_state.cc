@@ -75,13 +75,13 @@ WriteState::~WriteState() {
     delete tile_io_var;
 
   if (mbr_ != nullptr)
-    std::free(mbr_);
+    ::operator delete(mbr_);
 
   if (bounding_coords_ != nullptr)
-    std::free(bounding_coords_);
+    ::operator delete(bounding_coords_);
 
   if (tile_coords_aux_ != nullptr)
-    std::free(tile_coords_aux_);
+    ::operator delete(tile_coords_aux_);
 }
 
 /* ****************************** */
@@ -110,18 +110,18 @@ Status WriteState::init(const Fragment* fragment) {
   for (unsigned int i = 0; i < attribute_num; ++i)
     buffer_var_offsets_[i] = 0;
 
-  mbr_ = std::malloc(2 * coords_size);
+  mbr_ = ::operator new(2 * coords_size, std::nothrow);
   if (mbr_ == nullptr)
     return LOG_STATUS(Status::WriteStateError(
         "Cannot initialize write state; MBR allocation failed"));
 
-  bounding_coords_ = std::malloc(2 * coords_size);
+  bounding_coords_ = ::operator new(2 * coords_size, std::nothrow);
   if (bounding_coords_ == nullptr)
     return LOG_STATUS(
         Status::WriteStateError("Cannot initialize write state; Bounding "
                                 "coordinates allocation failed"));
 
-  tile_coords_aux_ = std::malloc(coords_size);
+  tile_coords_aux_ = ::operator new(coords_size, std::nothrow);
   if (tile_coords_aux_ == nullptr)
     return LOG_STATUS(
         Status::WriteStateError("Cannot initialize write state; Auxiliary tile "

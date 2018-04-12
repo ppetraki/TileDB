@@ -221,7 +221,7 @@ void Tile::split_coordinates() {
   uint64_t ptr = 0, ptr_tmp = 0;
 
   // Create a tile clone
-  auto tile_tmp = (char*)malloc(tile_size);
+  auto tile_tmp = (char*)::operator new(tile_size, std::nothrow);
   std::memcpy(tile_tmp, tile_c, tile_size);
 
   // Split coordinates
@@ -235,7 +235,7 @@ void Tile::split_coordinates() {
   }
 
   // Clean up
-  std::free((void*)tile_tmp);
+  ::operator delete((void*)tile_tmp);
 }
 
 bool Tile::stores_coords() const {
@@ -275,7 +275,7 @@ void Tile::zip_coordinates() {
   uint64_t ptr = 0, ptr_tmp = 0;
 
   // Create a tile clone
-  auto tile_tmp = (char*)malloc(tile_size);
+  auto tile_tmp = (char*)::operator new(tile_size, std::nothrow);
   std::memcpy(tile_tmp, tile_c, tile_size);
 
   // Zip coordinates
@@ -289,7 +289,7 @@ void Tile::zip_coordinates() {
   }
 
   // Clean up
-  std::free((void*)tile_tmp);
+  ::operator delete((void*)tile_tmp);
 }
 
 /* ****************************** */

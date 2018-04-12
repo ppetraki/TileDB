@@ -67,20 +67,20 @@ FragmentMetadata::FragmentMetadata(
 
 FragmentMetadata::~FragmentMetadata() {
   if (domain_ != nullptr)
-    std::free(domain_);
+    ::operator delete(domain_);
 
   if (non_empty_domain_ != nullptr)
-    std::free(non_empty_domain_);
+    ::operator delete(non_empty_domain_);
 
   auto mbr_num = (uint64_t)mbrs_.size();
   for (uint64_t i = 0; i < mbr_num; ++i)
     if (mbrs_[i] != nullptr)
-      std::free(mbrs_[i]);
+      ::operator delete(mbrs_[i]);
 
   auto bounding_coords_num = (uint64_t)bounding_coords_.size();
   for (uint64_t i = 0; i < bounding_coords_num; ++i)
     if (bounding_coords_[i] != nullptr)
-      std::free(bounding_coords_[i]);
+      ::operator delete(bounding_coords_[i]);
 }
 
 /* ****************************** */
@@ -92,7 +92,7 @@ void FragmentMetadata::append_bounding_coords(const void* bounding_coords) {
   uint64_t bounding_coords_size = 2 * array_schema_->coords_size();
 
   // Copy and append MBR
-  void* new_bounding_coords = std::malloc(bounding_coords_size);
+  void* new_bounding_coords = ::operator new(bounding_coords_size, std::nothrow);
   std::memcpy(new_bounding_coords, bounding_coords, bounding_coords_size);
   bounding_coords_.push_back(new_bounding_coords);
 }
@@ -131,7 +131,7 @@ Status FragmentMetadata::append_mbr(const void* mbr) {
   uint64_t mbr_size = 2 * array_schema_->coords_size();
 
   // Copy and append MBR
-  void* new_mbr = std::malloc(mbr_size);
+  void* new_mbr = ::operator new(mbr_size, std::nothrow);
   std::memcpy(new_mbr, mbr, mbr_size);
   mbrs_.push_back(new_mbr);
 
@@ -321,11 +321,11 @@ Status FragmentMetadata::init(const void* non_empty_domain) {
   uint64_t domain_size = 2 * array_schema_->coords_size();
   if (dense_) {
     // Set non-empty domain
-    non_empty_domain_ = std::malloc(domain_size);
+    non_empty_domain_ = ::operator new(domain_size, std::nothrow);
     std::memcpy(non_empty_domain_, non_empty_domain, domain_size);
 
     // Set expanded domain
-    domain_ = std::malloc(domain_size);
+    domain_ = ::operator new(domain_size, std::nothrow);
     std::memcpy(domain_, non_empty_domain_, domain_size);
     domain->expand_domain(domain_);
 
@@ -541,7 +541,7 @@ template <class T>
 Status FragmentMetadata::expand_non_empty_domain(const T* mbr) {
   if (non_empty_domain_ == nullptr) {
     auto domain_size = 2 * array_schema_->coords_size();
-    non_empty_domain_ = std::malloc(domain_size);
+    non_empty_domain_ = ::operator new(domain_size, std::nothrow);
     if (non_empty_domain_ == nullptr)
       return LOG_STATUS(Status::FragmentMetadataError(
           "Cannot expand non-empty domain; Memory allocation failed"));
@@ -582,10 +582,10 @@ Status FragmentMetadata::load_bounding_coords(ConstBuffer* buff) {
   void* bounding_coords;
   bounding_coords_.resize(bounding_coords_num);
   for (uint64_t i = 0; i < bounding_coords_num; ++i) {
-    bounding_coords = std::malloc(bounding_coords_size);
+    bounding_coords = ::operator new(bounding_coords_size, std::nothrow);
     st = buff->read(bounding_coords, bounding_coords_size);
     if (!st.ok()) {
-      std::free(bounding_coords);
+      ::operator delete(bounding_coords);
       return LOG_STATUS(
           Status::FragmentMetadataError("Cannot load fragment metadata; "
                                         "Reading bounding coordinates failed"));
@@ -661,10 +661,10 @@ Status FragmentMetadata::load_mbrs(ConstBuffer* buff) {
   void* mbr = nullptr;
   mbrs_.resize(mbr_num);
   for (uint64_t i = 0; i < mbr_num; ++i) {
-    mbr = std::malloc(mbr_size);
+    mbr = ::operator new(mbr_size, std::nothrow);
     st = buff->read(mbr, mbr_size);
     if (!st.ok()) {
-      std::free(mbr);
+      ::operator delete(mbr);
       return LOG_STATUS(Status::FragmentMetadataError(
           "Cannot load fragment metadata; Reading MBR failed"));
     }
@@ -689,10 +689,10 @@ Status FragmentMetadata::load_non_empty_domain(ConstBuffer* buff) {
   if (domain_size == 0) {
     non_empty_domain_ = nullptr;
   } else {
-    non_empty_domain_ = std::malloc(domain_size);
+    non_empty_domain_ = ::operator new(domain_size, std::nothrow);
     st = buff->read(non_empty_domain_, domain_size);
     if (!st.ok()) {
-      std::free(non_empty_domain_);
+      ::operator delete(non_empty_domain_);
       return LOG_STATUS(Status::FragmentMetadataError(
           "Cannot load fragment metadata; Reading domain failed"));
     }
@@ -702,7 +702,7 @@ Status FragmentMetadata::load_non_empty_domain(ConstBuffer* buff) {
   if (non_empty_domain_ == nullptr) {
     domain_ = nullptr;
   } else {
-    domain_ = std::malloc(domain_size);
+    domain_ = ::operator new(domain_size, std::nothrow);
     std::memcpy(domain_, non_empty_domain_, domain_size);
     array_schema_->domain()->expand_domain(domain_);
   }

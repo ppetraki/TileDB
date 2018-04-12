@@ -65,7 +65,7 @@ LRUCache::~LRUCache() {
 void LRUCache::clear() {
   for (auto& item : item_ll_) {
     if (evict_callback_ == nullptr)
-      std::free(item.object_);
+      ::operator delete(item.object_);
     else
       (*evict_callback_)(&item, evict_callback_data_);
   }
@@ -89,7 +89,7 @@ Status LRUCache::insert(
   bool exists = item_it != item_map_.end();
 
   if (exists && !overwrite) {
-    std::free(object);
+    ::operator delete(object);
     mtx_.unlock();
     return Status::Ok();
   }
@@ -104,7 +104,7 @@ Status LRUCache::insert(
     auto& node = item_it->second;
     auto& item = *node;
     if (evict_callback_ == nullptr)
-      std::free(item.object_);
+      ::operator delete(item.object_);
     else
       (*evict_callback_)(&item, evict_callback_data_);
     item.object_ = object;
@@ -225,7 +225,7 @@ void LRUCache::evict() {
 
   auto item = item_ll_.front();
   if (evict_callback_ == nullptr)
-    std::free(item.object_);
+    ::operator delete(item.object_);
   else
     (*evict_callback_)(&item, evict_callback_data_);
   item_map_.erase(item.key_);

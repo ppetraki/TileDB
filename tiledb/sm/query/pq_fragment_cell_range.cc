@@ -156,7 +156,7 @@ void PQFragmentCellRange<T>::split(
   // Create the new range
   fcr_new->fragment_id_ = fragment_id_;
   fcr_new->tile_pos_ = tile_pos_;
-  fcr_new->cell_range_ = (T*)std::malloc(2 * coords_size_);
+  fcr_new->cell_range_ = (T*)::operator new(2 * coords_size_, std::nothrow);
   fcr_new->tile_id_l_ = fcr->tile_id_l_;
   std::memcpy(fcr_new->cell_range_, fcr->cell_range_, coords_size_);
   fcr_new->tile_id_r_ = tile_id_r_;
@@ -179,7 +179,7 @@ void PQFragmentCellRange<T>::split_to_3(
   // Initialize fcr_left
   fcr_left->fragment_id_ = fragment_id_;
   fcr_left->tile_pos_ = tile_pos_;
-  fcr_left->cell_range_ = (T*)malloc(2 * coords_size_);
+  fcr_left->cell_range_ = (T*)::operator new(2 * coords_size_, std::nothrow);
   fcr_left->tile_id_l_ = tile_id_l_;
   std::memcpy(fcr_left->cell_range_, cell_range_, coords_size_);
 
@@ -203,7 +203,7 @@ void PQFragmentCellRange<T>::split_to_3(
     fcr_left->tile_id_r_ = array_schema_->domain()->tile_id<T>(
         &fcr_left->cell_range_[dim_num_], tile_coords_aux_);
   } else {
-    std::free(fcr_left->cell_range_);
+    ::operator delete(fcr_left->cell_range_);
     fcr_left->cell_range_ = nullptr;
   }
 
@@ -211,7 +211,7 @@ void PQFragmentCellRange<T>::split_to_3(
     tile_id_l_ =
         array_schema_->domain()->tile_id<T>(cell_range_, tile_coords_aux_);
   } else {
-    std::free(cell_range_);
+    ::operator delete(cell_range_);
     cell_range_ = nullptr;
   }
 
@@ -219,7 +219,7 @@ void PQFragmentCellRange<T>::split_to_3(
   if (target_exists) {
     fcr_unary->fragment_id_ = fragment_id_;
     fcr_unary->tile_pos_ = tile_pos_;
-    fcr_unary->cell_range_ = (T*)malloc(2 * coords_size_);
+    fcr_unary->cell_range_ = (T*)::operator new(2 * coords_size_, std::nothrow);
     fcr_unary->tile_id_l_ = fcr->tile_id_l_;
     std::memcpy(fcr_unary->cell_range_, fcr->cell_range_, coords_size_);
     fcr_unary->tile_id_r_ = fcr->tile_id_l_;
@@ -238,7 +238,7 @@ void PQFragmentCellRange<T>::trim(
   // Construct trimmed range
   fcr_trimmed->fragment_id_ = fcr->fragment_id_;
   fcr_trimmed->tile_pos_ = fcr->tile_pos_;
-  fcr_trimmed->cell_range_ = (T*)malloc(2 * coords_size_);
+  fcr_trimmed->cell_range_ = (T*)::operator new(2 * coords_size_, std::nothrow);
   memcpy(fcr_trimmed->cell_range_, &cell_range_[dim_num_], coords_size_);
   fcr_trimmed->tile_id_l_ = tile_id_r_;
   memcpy(

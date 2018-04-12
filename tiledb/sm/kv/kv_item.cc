@@ -71,13 +71,13 @@ KVItem& KVItem::operator=(const KVItem& kv_item) {
 
 void KVItem::clear() {
   if (key_.key_ != nullptr) {
-    std::free(key_.key_);
+    ::operator delete(key_.key_);
     key_.key_ = nullptr;
   }
 
   for (auto& v : values_) {
     if ((v.second)->value_ != nullptr)
-      std::free((v.second)->value_);
+      ::operator delete((v.second)->value_);
     delete v.second;
   }
   values_.clear();
@@ -136,8 +136,8 @@ Status KVItem::set_key(
         Status::KVItemError("Cannot add key; Key cannot be empty"));
 
   if (key_.key_ != nullptr)
-    std::free(key_.key_);
-  key_.key_ = std::malloc(key_size);
+    ::operator delete(key_.key_);
+  key_.key_ = ::operator new(key_size, std::nothrow);
   if (key_.key_ == nullptr)
     return LOG_STATUS(
         Status::KVItemError("Cannot set key; Failed to allocate memory"));
@@ -170,7 +170,7 @@ Status KVItem::set_value(
   auto it = values_.find(attribute);
   if (it != values_.end()) {
     if (it->second->value_ != nullptr)
-      std::free(it->second->value_);
+      ::operator delete(it->second->value_);
     delete it->second;
     values_.erase(it);
   }
@@ -178,7 +178,7 @@ Status KVItem::set_value(
   // Set new value
   auto value_obj = new Value();
   value_obj->attribute_ = attribute;
-  value_obj->value_ = std::malloc(value_size);
+  value_obj->value_ = ::operator new(value_size, std::nothrow);
   if (value_obj->value_ == nullptr) {
     delete value_obj;
     return LOG_STATUS(
@@ -229,7 +229,7 @@ void KVItem::copy_hash(const Hash& hash) {
 
 void KVItem::copy_key(const Key& key) {
   if (key.key_ != nullptr && key.key_size_ != 0) {
-    key_.key_ = std::malloc(key.key_size_);
+    key_.key_ = ::operator new(key.key_size_, std::nothrow);
     if (key_.key_ != nullptr)
       std::memcpy(key_.key_, key.key_, key.key_size_);
     else
@@ -245,7 +245,7 @@ void KVItem::copy_value(const Value& value) {
   auto new_value = new Value();
   new_value->attribute_ = value.attribute_;
   if (value.value_ != nullptr && value.value_size_ != 0) {
-    new_value->value_ = std::malloc(value.value_size_);
+    new_value->value_ = ::operator new(value.value_size_, std::nothrow);
     if (new_value->value_ != nullptr)
       std::memcpy(new_value->value_, value.value_, value.value_size_);
     else

@@ -87,7 +87,7 @@ Query::Query(Query* common_query) {
 
 Query::~Query() {
   if (subarray_ != nullptr)
-    std::free(subarray_);
+    ::operator delete(subarray_);
 
   delete array_read_state_;
   delete array_ordered_read_state_;
@@ -193,7 +193,7 @@ Status Query::compute_subarrays(
   // Prepare subarray
   auto domain = array_schema_->domain();
   uint64_t subarray_size = 2 * array_schema_->coords_size();
-  void* first_subarray = std::malloc(subarray_size);
+  void* first_subarray = ::operator new(subarray_size, std::nothrow);
   if (first_subarray == nullptr)
     return LOG_STATUS(Status::QueryError(
         "Cannot compute subarrays; Failed to allocate memory"));
@@ -230,7 +230,7 @@ Status Query::compute_subarrays(
       }
     }
     if (no_results) {
-      std::free(*it);
+      ::operator delete(*it);
       it = my_subarrays.erase(it);
       continue;
     }
@@ -265,7 +265,7 @@ Status Query::compute_subarrays(
   // Clean up upon error
   if (!st.ok()) {
     for (auto s : my_subarrays)
-      std::free(s);
+      ::operator delete(s);
     return st;
   }
 
@@ -1037,7 +1037,7 @@ Status Query::set_subarray(const void* subarray) {
   uint64_t subarray_size = 2 * array_schema_->coords_size();
 
   if (subarray_ == nullptr)
-    subarray_ = std::malloc(subarray_size);
+    subarray_ = ::operator new(subarray_size, std::nothrow);
 
   if (subarray_ == nullptr)
     return LOG_STATUS(

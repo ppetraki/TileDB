@@ -147,13 +147,13 @@ void StringFx::write_array(const std::string& array_name) {
   REQUIRE(rc == TILEDB_OK);
 
   // Prepare buffers
-  void* buffer_a1 = std::malloc(sizeof(UTF8_STRINGS) - UTF8_NULL_SIZE);
+  void* buffer_a1 = ::operator new(sizeof(UTF8_STRINGS) - UTF8_NULL_SIZE, std::nothrow);
   uint64_t buffer_a2_offsets[] = {
       UTF8_OFFSET_0, UTF8_OFFSET_1, UTF8_OFFSET_2, UTF8_OFFSET_3};
-  void* buffer_a2 = std::malloc(sizeof(UTF8_STRINGS_VAR) - UTF8_NULL_SIZE);
+  void* buffer_a2 = ::operator new(sizeof(UTF8_STRINGS_VAR) - UTF8_NULL_SIZE, std::nothrow);
   uint64_t buffer_a3_offsets[] = {
       UTF16_OFFSET_0, UTF16_OFFSET_1, UTF16_OFFSET_2, UTF16_OFFSET_3};
-  void* buffer_a3 = std::malloc(sizeof(UTF16_STRINGS_VAR) - UTF16_NULL_SIZE);
+  void* buffer_a3 = ::operator new(sizeof(UTF16_STRINGS_VAR) - UTF16_NULL_SIZE, std::nothrow);
   std::memcpy(buffer_a1, UTF8_STRINGS, sizeof(UTF8_STRINGS) - UTF8_NULL_SIZE);
   std::memcpy(
       buffer_a2, UTF8_STRINGS_VAR, sizeof(UTF8_STRINGS_VAR) - UTF8_NULL_SIZE);
@@ -189,9 +189,9 @@ void StringFx::write_array(const std::string& array_name) {
   // Clean up
   REQUIRE(tiledb_query_free(ctx, &query) == TILEDB_OK);
   REQUIRE(tiledb_ctx_free(&ctx) == TILEDB_OK);
-  std::free(buffer_a1);
-  std::free(buffer_a2);
-  std::free(buffer_a3);
+  ::operator delete(buffer_a1);
+  ::operator delete(buffer_a2);
+  ::operator delete(buffer_a3);
 }
 
 void StringFx::read_array(const std::string& array_name) {
@@ -201,11 +201,11 @@ void StringFx::read_array(const std::string& array_name) {
   REQUIRE(rc == TILEDB_OK);
 
   // Prepare cell buffers
-  void* buffer_a1 = std::malloc(sizeof(UTF8_STRINGS) - UTF8_NULL_SIZE);
+  void* buffer_a1 = ::operator new(sizeof(UTF8_STRINGS) - UTF8_NULL_SIZE, std::nothrow);
   uint64_t buffer_a2_offsets[4];
   uint64_t buffer_a3_offsets[4];
-  void* buffer_a2 = std::malloc(sizeof(UTF8_STRINGS_VAR) - UTF8_NULL_SIZE);
-  void* buffer_a3 = std::malloc(sizeof(UTF16_STRINGS_VAR) - UTF16_NULL_SIZE);
+  void* buffer_a2 = ::operator new(sizeof(UTF8_STRINGS_VAR) - UTF8_NULL_SIZE, std::nothrow);
+  void* buffer_a3 = ::operator new(sizeof(UTF16_STRINGS_VAR) - UTF16_NULL_SIZE, std::nothrow);
   void* buffers[] = {
       buffer_a1, buffer_a2_offsets, buffer_a2, buffer_a3_offsets, buffer_a3};
   uint64_t buffer_sizes[] = {sizeof(UTF8_STRINGS) - UTF8_NULL_SIZE,
@@ -257,9 +257,9 @@ void StringFx::read_array(const std::string& array_name) {
   // Clean up
   REQUIRE(tiledb_query_free(ctx, &query) == TILEDB_OK);
   REQUIRE(tiledb_ctx_free(&ctx) == TILEDB_OK);
-  std::free(buffer_a1);
-  std::free(buffer_a2);
-  std::free(buffer_a3);
+  ::operator delete(buffer_a1);
+  ::operator delete(buffer_a2);
+  ::operator delete(buffer_a3);
 }
 
 void StringFx::delete_array(const std::string& array_name) {

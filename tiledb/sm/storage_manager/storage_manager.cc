@@ -1095,7 +1095,7 @@ Status StorageManager::write_to_cache(
   key << uri.to_string() << "+" << offset;
 
   // Insert to cache
-  void* object = std::malloc(object_size);
+  void* object = ::operator new(object_size, std::nothrow);
   if (object == nullptr)
     return LOG_STATUS(Status::StorageManagerError(
         "Cannot write to cache; Object memory allocation failed"));

@@ -67,14 +67,14 @@ Dimension::Dimension(const Dimension* dim) {
   name_ = dim->name();
   type_ = dim->type_;
   uint64_t type_size = datatype_size(type_);
-  domain_ = std::malloc(2 * type_size);
+  domain_ = ::operator new(2 * type_size, std::nothrow);
   std::memcpy(domain_, dim->domain(), 2 * type_size);
 
   const void* tile_extent = dim->tile_extent();
   if (tile_extent == nullptr) {
     tile_extent_ = nullptr;
   } else {
-    tile_extent_ = std::malloc(type_size);
+    tile_extent_ = ::operator new(type_size, std::nothrow);
     std::memcpy(tile_extent_, tile_extent, type_size);
   }
 }
@@ -82,9 +82,9 @@ Dimension::Dimension(const Dimension* dim) {
 Dimension::~Dimension() {
   // Clean up
   if (domain_ != nullptr)
-    std::free(domain_);
+    ::operator delete(domain_);
   if (tile_extent_ != nullptr)
-    std::free(tile_extent_);
+    ::operator delete(tile_extent_);
 }
 
 /* ********************************* */
@@ -110,8 +110,8 @@ Status Dimension::deserialize(ConstBuffer* buff, Datatype type) {
   // Load domain
   uint64_t domain_size = 2 * datatype_size(type_);
   if (domain_ != nullptr)
-    std::free(domain_);
-  domain_ = std::malloc(domain_size);
+    ::operator delete(domain_);
+  domain_ = ::operator new(domain_size, std::nothrow);
   if (domain_ == nullptr)
     return LOG_STATUS(
         Status::DimensionError("Cannot deserialize; Memory allocation failed"));
@@ -119,12 +119,12 @@ Status Dimension::deserialize(ConstBuffer* buff, Datatype type) {
 
   // Load tile extent
   if (tile_extent_ != nullptr)
-    std::free(tile_extent_);
+    ::operator delete(tile_extent_);
   tile_extent_ = nullptr;
   bool null_tile_extent;
   RETURN_NOT_OK(buff->read(&null_tile_extent, sizeof(bool)));
   if (!null_tile_extent) {
-    tile_extent_ = std::malloc(datatype_size(type_));
+    tile_extent_ = ::operator new(datatype_size(type_), std::nothrow);
     if (tile_extent_ == nullptr) {
       return LOG_STATUS(Status::DimensionError(
           "Cannot deserialize; Memory allocation failed"));
@@ -192,7 +192,7 @@ Status Dimension::serialize(Buffer* buff) {
 
 Status Dimension::set_domain(const void* domain) {
   if (domain_ != nullptr)
-    std::free(domain_);
+    ::operator delete(domain_);
 
   if (domain == nullptr) {
     domain_ = nullptr;
@@ -200,7 +200,7 @@ Status Dimension::set_domain(const void* domain) {
   }
 
   uint64_t domain_size = 2 * datatype_size(type_);
-  domain_ = std::malloc(domain_size);
+  domain_ = ::operator new(domain_size, std::nothrow);
   if (domain_ == nullptr) {
     return LOG_STATUS(
         Status::DimensionError("Cannot set domain; Memory allocation error"));
@@ -209,7 +209,7 @@ Status Dimension::set_domain(const void* domain) {
 
   auto st = check_domain();
   if (!st.ok()) {
-    std::free(domain_);
+    ::operator delete(domain_);
     domain_ = nullptr;
   }
 
@@ -218,7 +218,7 @@ Status Dimension::set_domain(const void* domain) {
 
 Status Dimension::set_tile_extent(const void* tile_extent) {
   if (tile_extent_ != nullptr)
-    std::free(tile_extent_);
+    ::operator delete(tile_extent_);
 
   if (tile_extent == nullptr) {
     tile_extent_ = nullptr;
@@ -226,7 +226,7 @@ Status Dimension::set_tile_extent(const void* tile_extent) {
   }
 
   uint64_t type_size = datatype_size(type_);
-  tile_extent_ = std::malloc(type_size);
+  tile_extent_ = ::operator new(type_size, std::nothrow);
   if (tile_extent_ == nullptr) {
     return LOG_STATUS(Status::DimensionError(
         "Cannot set tile extent; Memory allocation error"));
@@ -235,7 +235,7 @@ Status Dimension::set_tile_extent(const void* tile_extent) {
 
   auto st = check_tile_extent();
   if (!st.ok()) {
-    std::free(domain_);
+    ::operator delete(domain_);
     domain_ = nullptr;
   }
 

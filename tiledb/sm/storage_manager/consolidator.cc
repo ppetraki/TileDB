@@ -131,7 +131,7 @@ Status Consolidator::consolidate(const char* array_name) {
 // Clean up
 clean_up:
   if (subarray != nullptr)
-    std::free(subarray);
+    ::operator delete(subarray);
   delete array_schema;
   free_buffers(buffer_num, buffers, buffer_sizes);
   delete query_r;
@@ -172,7 +172,7 @@ Status Consolidator::copy_array(
   // Clean up
   for (const auto& s : subarrays) {
     if (s != nullptr)
-      std::free(s);
+      ::operator delete(s);
   }
 
   return st;
@@ -194,7 +194,7 @@ Status Consolidator::create_buffers(
   *buffer_num += (dense) ? 0 : 1;
 
   // Create buffers
-  *buffers = (void**)std::malloc(*buffer_num * sizeof(void*));
+  *buffers = (void**)::operator new(*buffer_num * sizeof(void*), std::nothrow);
   if (*buffers == nullptr) {
     return LOG_STATUS(Status::ConsolidationError(
         "Cannot create consolidation buffers; Memory allocation failed"));
@@ -208,7 +208,7 @@ Status Consolidator::create_buffers(
   // Allocate space for each buffer
   bool error = false;
   for (unsigned int i = 0; i < *buffer_num; ++i) {
-    (*buffers)[i] = std::malloc(constants::consolidation_buffer_size);
+    (*buffers)[i] = ::operator new(constants::consolidation_buffer_size, std::nothrow);
     if ((*buffers)[i] == nullptr)  // The loop should continue to
       error = true;                // allocate nullptr to each buffer
     (*buffer_sizes)[i] = constants::consolidation_buffer_size;
@@ -278,7 +278,7 @@ Status Consolidator::create_subarray(
     void** subarray) const {
   // Create subarray only for the dense case
   if (array_schema->dense()) {
-    *subarray = std::malloc(2 * array_schema->coords_size());
+    *subarray = ::operator new(2 * array_schema->coords_size(), std::nothrow);
     if (*subarray == nullptr)
       return LOG_STATUS(Status::ConsolidationError(
           "Cannot create subarray; Failed to allocate memory"));
@@ -286,7 +286,7 @@ Status Consolidator::create_subarray(
     RETURN_NOT_OK_ELSE(
         storage_manager_->array_get_non_empty_domain(
             array_name.c_str(), *subarray, &is_empty),
-        std::free(subarray));
+        ::operator delete(subarray));
     assert(!is_empty);
     array_schema->domain()->expand_domain(*subarray);
   }
@@ -312,9 +312,9 @@ void Consolidator::free_buffers(
     unsigned int buffer_num, void** buffers, uint64_t* buffer_sizes) {
   for (unsigned int i = 0; i < buffer_num; ++i) {
     if (buffers[i] != nullptr)
-      std::free(buffers[i]);
+      ::operator delete(buffers[i]);
   }
-  std::free(buffers);
+  ::operator delete(buffers);
   delete[] buffer_sizes;
 }
 
