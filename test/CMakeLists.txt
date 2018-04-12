@@ -63,6 +63,7 @@ set(TILEDB_TEST_SOURCES
   src/unit-uri.cc
   src/unit-win-filesystem.cc
   src/unit.cc
+  src/unit-memory.cc
 )
 
 if (TILEDB_CPP_API)
