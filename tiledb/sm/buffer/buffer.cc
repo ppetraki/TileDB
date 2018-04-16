@@ -88,7 +88,7 @@ uint64_t Buffer::alloced_size() const {
 
 void Buffer::clear() {
   if (data_ != nullptr && owns_data_)
-    ::operator delete(data_);
+    std::free(data_);
 
   data_ = nullptr;
   offset_ = 0;
@@ -138,7 +138,7 @@ Status Buffer::realloc(uint64_t nbytes) {
   }
 
   if (data_ == nullptr) {
-    data_ = ::operator new(nbytes, std::nothrow);
+    data_ = std::malloc(nbytes);
     if (data_ == nullptr) {
       return LOG_STATUS(Status::BufferError(
           "Cannot allocate buffer; Memory allocation failed"));
